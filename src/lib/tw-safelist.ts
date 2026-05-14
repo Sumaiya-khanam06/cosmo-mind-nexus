@@ -21,6 +21,7 @@ hover:bg-neon-blue/10 hover:bg-neon-purple/10 hover:bg-neon-cyan/10 hover:bg-neo
 
 from-neon-blue from-neon-purple from-neon-cyan from-neon-pink
 from-neon-blue/30 from-neon-purple/30 from-neon-cyan/30 from-neon-pink/30
+from-neon-blue/40 from-neon-purple/40 from-neon-cyan/40 from-neon-pink/40
 to-neon-blue to-neon-purple to-neon-cyan to-neon-pink
 to-neon-blue/30 to-neon-purple/30 to-neon-cyan/30 to-neon-pink/30
 via-neon-blue via-neon-purple via-neon-cyan via-neon-pink
