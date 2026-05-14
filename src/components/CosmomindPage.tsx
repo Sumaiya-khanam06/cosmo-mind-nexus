@@ -403,80 +403,205 @@ function Dashboard() {
   );
 }
 
-// ---------- Upload / Demo ----------
+// ---------- Upload Center ----------
+type UploadedFile = {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+  kind: "image" | "video" | "audio" | "doc";
+  progress: number;
+  status: "scanning" | "analyzing" | "done";
+  insight?: string;
+};
+
+const KIND_INSIGHTS: Record<UploadedFile["kind"], string[]> = {
+  image: ["Terrain anomaly detected in sector 7-G", "Cloud formation reconstructed at 98% fidelity", "Surface temperature gradient mapped"],
+  video: ["Orbital movement identified · 7.66 km/s", "Frame-level anomaly at 00:42", "Launch trajectory nominal"],
+  audio: ["Signal reconstruction complete · 99.2%", "VHF burst pattern classified", "Astronaut comm intent recognized"],
+  doc: ["Mission report summarized · 4 key risks", "Telemetry log parsed · 0 critical events", "Research extract: 12 entities tagged"],
+};
+
+function detectKind(type: string, name: string): UploadedFile["kind"] {
+  if (type.startsWith("image/")) return "image";
+  if (type.startsWith("video/")) return "video";
+  if (type.startsWith("audio/")) return "audio";
+  if (/\.(pdf|txt|md|json|csv)$/i.test(name)) return "doc";
+  return "doc";
+}
+
+function UploadSlot({
+  label, accept, color, icon: Icon,
+  files, onFiles, onRemove,
+}: {
+  label: string; accept: string; color: string; icon: typeof Upload;
+  files: UploadedFile[];
+  onFiles: (fl: FileList | null) => void;
+  onRemove: (id: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [drag, setDrag] = useState(false);
+  return (
+    <div className={`relative overflow-hidden rounded-2xl glass-panel-glow p-5 transition hover:border-${color}/50`}>
+      <div className={`mb-3 flex items-center justify-between text-xs uppercase tracking-widest text-${color}`}>
+        <span className="flex items-center gap-2"><Icon className="h-4 w-4" /> {label}</span>
+        <span className="text-[10px] text-muted-foreground">{files.length} file{files.length !== 1 ? "s" : ""}</span>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        multiple
+        className="hidden"
+        onChange={(e) => { onFiles(e.target.files); if (inputRef.current) inputRef.current.value = ""; }}
+      />
+
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => { e.preventDefault(); setDrag(false); onFiles(e.dataTransfer.files); }}
+        className={`relative grid h-40 w-full place-items-center overflow-hidden rounded-xl border-2 border-dashed bg-${color}/5 transition cursor-pointer ${
+          drag ? `border-${color} bg-${color}/15 scale-[1.02]` : `border-${color}/40 hover:border-${color}/70 hover:bg-${color}/10`
+        }`}
+      >
+        <span className={`pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-${color} to-transparent animate-pulse`} />
+        <span className={`pointer-events-none absolute inset-x-4 bottom-0 h-px bg-gradient-to-r from-transparent via-${color} to-transparent animate-pulse`} />
+        <div className="text-center pointer-events-none">
+          <Upload className={`mx-auto mb-2 h-8 w-8 text-${color}`} />
+          <div className="font-display text-sm font-bold">Drop or click to upload</div>
+          <div className="mt-1 text-[10px] uppercase tracking-widest text-muted-foreground">{accept.replace(/,/g, " · ")}</div>
+        </div>
+      </button>
+
+      {files.length > 0 && (
+        <div className="mt-4 space-y-3">
+          {files.map((f) => (
+            <div key={f.id} className={`relative overflow-hidden rounded-xl border border-${color}/30 bg-background/60 p-3`}>
+              <div className="flex items-start gap-3">
+                <div className={`grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-${color}/40 bg-${color}/10`}>
+                  {f.kind === "image" ? (
+                    <img src={f.url} alt={f.name} className="h-full w-full object-cover" />
+                  ) : f.kind === "video" ? (
+                    <Video className={`h-6 w-6 text-${color}`} />
+                  ) : f.kind === "audio" ? (
+                    <AudioLines className={`h-6 w-6 text-${color}`} />
+                  ) : (
+                    <FileText className={`h-6 w-6 text-${color}`} />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="truncate text-sm font-semibold">{f.name}</div>
+                    <button onClick={() => onRemove(f.id)} className="text-muted-foreground hover:text-neon-pink">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    {(f.size / 1024).toFixed(1)} KB
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 text-[10px] uppercase tracking-widest">
+                    {f.status === "done" ? (
+                      <><CheckCircle2 className="h-3 w-3 text-neon-cyan" /><span className="text-neon-cyan">Analysis complete</span></>
+                    ) : (
+                      <><Loader2 className={`h-3 w-3 animate-spin text-${color}`} /><span className={`text-${color}`}>{f.status === "scanning" ? "Scanning…" : "Analyzing multimodal data…"}</span></>
+                    )}
+                  </div>
+                  <div className="mt-2 h-1 overflow-hidden rounded-full bg-secondary">
+                    <div className={`h-full bg-gradient-to-r from-${color} to-neon-pink transition-all duration-300`} style={{ width: `${f.progress}%` }} />
+                  </div>
+                  {f.insight && (
+                    <div className={`mt-2 rounded-md border border-${color}/30 bg-${color}/5 px-2 py-1.5 text-xs`}>
+                      <span className="text-neon-cyan font-semibold">AI · </span>{f.insight}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Demo() {
-  const [stage, setStage] = useState(0);
-  const stages = ["Upload", "Fuse", "Reason", "Output"];
+  const [files, setFiles] = useState<Record<string, UploadedFile[]>>({
+    image: [], video: [], audio: [], doc: [],
+  });
+
+  const addFiles = (slot: keyof typeof files, fl: FileList | null) => {
+    if (!fl || fl.length === 0) return;
+    const newFiles: UploadedFile[] = Array.from(fl).map((file) => {
+      const kind = detectKind(file.type, file.name);
+      return {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name: file.name, size: file.size, type: file.type,
+        url: URL.createObjectURL(file),
+        kind, progress: 0, status: "scanning",
+      };
+    });
+    setFiles((prev) => ({ ...prev, [slot]: [...prev[slot], ...newFiles] }));
+
+    newFiles.forEach((nf) => {
+      const tick = setInterval(() => {
+        setFiles((prev) => {
+          const arr = prev[slot].map((f) => {
+            if (f.id !== nf.id) return f;
+            const np = Math.min(100, f.progress + 8 + Math.random() * 12);
+            const status: UploadedFile["status"] =
+              np >= 100 ? "done" : np > 50 ? "analyzing" : "scanning";
+            const insight = np >= 100
+              ? KIND_INSIGHTS[f.kind][Math.floor(Math.random() * KIND_INSIGHTS[f.kind].length)]
+              : f.insight;
+            return { ...f, progress: np, status, insight };
+          });
+          return { ...prev, [slot]: arr };
+        });
+      }, 220);
+      setTimeout(() => clearInterval(tick), 4000);
+    });
+  };
+
+  const removeFile = (slot: keyof typeof files, id: string) => {
+    setFiles((prev) => {
+      const f = prev[slot].find((x) => x.id === id);
+      if (f) URL.revokeObjectURL(f.url);
+      return { ...prev, [slot]: prev[slot].filter((x) => x.id !== id) };
+    });
+  };
+
+  const slots = [
+    { key: "image" as const, label: "Satellite Image Input", accept: "image/*", color: "neon-blue", icon: ImageIcon },
+    { key: "video" as const, label: "Orbital Video Feed", accept: "video/*", color: "neon-purple", icon: Video },
+    { key: "audio" as const, label: "Space Signal Audio", accept: "audio/*", color: "neon-cyan", icon: AudioLines },
+    { key: "doc" as const, label: "Mission Intelligence Reports", accept: ".pdf,.txt,.md,.json,.csv", color: "neon-pink", icon: FileText },
+  ];
+
   return (
     <section id="demo" className="relative px-6 py-32">
       <SectionTitle
-        kicker="Prototype flow"
-        title="Watch it think"
-        sub="Drop multimodal inputs, watch the engine reason in real time, receive intelligence."
+        kicker="Multimodal upload center"
+        title="Feed the cognition core"
+        sub="Drop satellite imagery, orbital video, signal audio, or mission text. The engine scans, analyzes, and returns insights in real time."
       />
-      <div className="mx-auto max-w-6xl">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl glass-panel-glow p-6">
-            <div className="mb-4 flex items-center gap-2 text-xs uppercase tracking-widest text-neon-cyan">
-              <Upload className="h-4 w-4" /> Multimodal Upload
-            </div>
-            <div className="relative grid h-64 place-items-center rounded-xl border-2 border-dashed border-neon-blue/40 bg-neon-blue/5 transition hover:border-neon-cyan hover:bg-neon-cyan/5">
-              <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-neon-cyan to-transparent animate-pulse" />
-              <div className="text-center">
-                <Upload className="mx-auto mb-3 h-10 w-10 text-neon-cyan" />
-                <div className="font-display text-lg font-bold">Drop files here</div>
-                <div className="mt-1 text-xs text-muted-foreground">Image · Video · Audio · PDF / Text</div>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-4 gap-3">
-              {[
-                { i: ImageIcon, l: "sat_47.tif", c: "neon-blue" },
-                { i: Video, l: "launch.mp4", c: "neon-purple" },
-                { i: AudioLines, l: "comm.wav", c: "neon-cyan" },
-                { i: FileText, l: "brief.pdf", c: "neon-pink" },
-              ].map((f) => (
-                <div key={f.l} className={`rounded-lg border border-${f.c}/30 bg-${f.c}/5 p-3 text-center`}>
-                  <f.i className={`mx-auto mb-1 h-4 w-4 text-${f.c}`} />
-                  <div className="truncate text-[10px] text-muted-foreground">{f.l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl glass-panel-glow p-6">
-            <div className="mb-4 flex items-center justify-between text-xs uppercase tracking-widest text-neon-purple">
-              <span className="flex items-center gap-2"><Network className="h-4 w-4" /> Pipeline</span>
-              <button onClick={() => setStage((s) => (s + 1) % stages.length)} className="rounded-md border border-neon-purple/40 px-2 py-1 text-[10px] hover:bg-neon-purple/10">
-                Step
-              </button>
-            </div>
-            <ol className="space-y-3">
-              {stages.map((s, i) => (
-                <li key={s} className={`flex items-center gap-3 rounded-xl border p-3 transition ${
-                  i <= stage ? "border-neon-cyan/40 bg-neon-cyan/5" : "border-border bg-background/30 opacity-50"
-                }`}>
-                  <div className={`grid h-7 w-7 place-items-center rounded-full font-bold ${
-                    i <= stage ? "bg-neon-cyan text-background" : "bg-secondary text-muted-foreground"
-                  }`}>{i + 1}</div>
-                  <span className="text-sm font-semibold">{s}</span>
-                  {i === stage && <span className="ml-auto text-[10px] uppercase tracking-widest text-neon-cyan">Active</span>}
-                </li>
-              ))}
-            </ol>
-
-            <div className="mt-5 rounded-xl border border-neon-pink/30 bg-gradient-to-br from-neon-pink/10 to-neon-purple/10 p-4">
-              <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-widest text-neon-pink">
-                <Sparkles className="h-3 w-3" /> Generated insight
-              </div>
-              <p className="text-sm leading-relaxed">
-                Detected a <span className="text-neon-pink font-semibold">cyclonic anomaly</span> over the Bay of Bengal,
-                correlated with an unscheduled <span className="text-neon-cyan font-semibold">VHF burst</span> from
-                ISS comm. Mission report flags consistent with predicted weather front. Recommend
-                <span className="text-neon-purple font-semibold"> Tier-2 alert</span>.
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-2">
+        {slots.map((s) => (
+          <motion.div key={s.key} {...fadeUp}>
+            <UploadSlot
+              label={s.label}
+              accept={s.accept}
+              color={s.color}
+              icon={s.icon}
+              files={files[s.key]}
+              onFiles={(fl) => addFiles(s.key, fl)}
+              onRemove={(id) => removeFile(s.key, id)}
+            />
+          </motion.div>
+        ))}
       </div>
     </section>
   );
