@@ -3,10 +3,11 @@ import {
   Satellite, Brain, Radio, FileText, Image as ImageIcon, Video, AudioLines,
   Activity, Zap, Globe2, ShieldAlert, Sparkles, Upload, ArrowRight,
   Cpu, Network, Eye, Waves, Cloud, Rocket, Target, Bot, Send,
+  Camera, X, CheckCircle2, Loader2,
 } from "lucide-react";
 import { StarField } from "@/components/StarField";
 import { CosmicEarth } from "@/components/CosmicEarth";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // ---------- Reusable bits ----------
 const fadeUp = {
