@@ -9,12 +9,19 @@ bg-neon-pink/5 bg-neon-pink/10 bg-neon-pink/15 bg-neon-pink/20 bg-neon-pink/30
 
 text-neon-blue text-neon-purple text-neon-cyan text-neon-pink
 
-border-neon-blue/20 border-neon-blue/30 border-neon-blue/40 border-neon-blue/50
-border-neon-purple/20 border-neon-purple/30 border-neon-purple/40 border-neon-purple/50
-border-neon-cyan/20 border-neon-cyan/30 border-neon-cyan/40 border-neon-cyan/50
-border-neon-pink/20 border-neon-pink/30 border-neon-pink/40 border-neon-pink/50
+border-neon-blue border-neon-purple border-neon-cyan border-neon-pink
+border-neon-blue/20 border-neon-blue/30 border-neon-blue/40 border-neon-blue/50 border-neon-blue/70
+border-neon-purple/20 border-neon-purple/30 border-neon-purple/40 border-neon-purple/50 border-neon-purple/70
+border-neon-cyan/20 border-neon-cyan/30 border-neon-cyan/40 border-neon-cyan/50 border-neon-cyan/70
+border-neon-pink/20 border-neon-pink/30 border-neon-pink/40 border-neon-pink/50 border-neon-pink/70
 
+hover:border-neon-blue/50 hover:border-neon-purple/50 hover:border-neon-cyan/50 hover:border-neon-pink/50
+hover:border-neon-blue/70 hover:border-neon-purple/70 hover:border-neon-cyan/70 hover:border-neon-pink/70
+hover:bg-neon-blue/10 hover:bg-neon-purple/10 hover:bg-neon-cyan/10 hover:bg-neon-pink/10
+
+from-neon-blue from-neon-purple from-neon-cyan from-neon-pink
 from-neon-blue/30 from-neon-purple/30 from-neon-cyan/30 from-neon-pink/30
+to-neon-blue to-neon-purple to-neon-cyan to-neon-pink
 to-neon-blue/30 to-neon-purple/30 to-neon-cyan/30 to-neon-pink/30
 via-neon-blue via-neon-purple via-neon-cyan via-neon-pink
 
