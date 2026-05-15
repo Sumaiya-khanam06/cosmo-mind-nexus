@@ -1155,6 +1155,7 @@ export default function CosmomindPage() {
         <Engine />
         <Dashboard />
         <Demo />
+        <ResultsDashboard />
         <Applications />
         <TechFuture />
         <Team />
