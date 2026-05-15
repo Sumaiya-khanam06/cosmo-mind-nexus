@@ -933,22 +933,20 @@ function UploadSlot({
   );
 }
 
-function Demo() {
-  const [files, setFiles] = useState<Record<string, UploadedFile[]>>({
-    image: [], video: [], audio: [], doc: [],
-  });
+type FilesBySlot = Record<"image" | "video" | "audio" | "doc", UploadedFile[]>;
 
-  const addFiles = (slot: keyof typeof files, fl: FileList | null) => {
+function useUploadEngine() {
+  const [files, setFiles] = useState<FilesBySlot>({ image: [], video: [], audio: [], doc: [] });
+
+  const addFiles = (slot: keyof FilesBySlot, fl: FileList | null) => {
     if (!fl || fl.length === 0) return;
-    const newFiles: UploadedFile[] = Array.from(fl).map((file) => {
-      const kind = detectKind(file.type, file.name);
-      return {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        name: file.name, size: file.size, type: file.type,
-        url: URL.createObjectURL(file),
-        kind, progress: 0, status: "scanning",
-      };
-    });
+    const newFiles: UploadedFile[] = Array.from(fl).map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: file.name, size: file.size, type: file.type,
+      url: URL.createObjectURL(file),
+      kind: detectKind(file.type, file.name),
+      progress: 0, status: "scanning",
+    }));
     setFiles((prev) => ({ ...prev, [slot]: [...prev[slot], ...newFiles] }));
 
     newFiles.forEach((nf) => {
@@ -956,7 +954,7 @@ function Demo() {
         setFiles((prev) => {
           const arr = prev[slot].map((f) => {
             if (f.id !== nf.id) return f;
-            const np = Math.min(100, f.progress + 8 + Math.random() * 12);
+            const np = Math.min(100, f.progress + 6 + Math.random() * 9);
             const status: UploadedFile["status"] =
               np >= 100 ? "done" : np > 50 ? "analyzing" : "scanning";
             const insight = np >= 100
@@ -966,12 +964,12 @@ function Demo() {
           });
           return { ...prev, [slot]: arr };
         });
-      }, 220);
-      setTimeout(() => clearInterval(tick), 4000);
+      }, 260);
+      setTimeout(() => clearInterval(tick), 5200);
     });
   };
 
-  const removeFile = (slot: keyof typeof files, id: string) => {
+  const removeFile = (slot: keyof FilesBySlot, id: string) => {
     setFiles((prev) => {
       const f = prev[slot].find((x) => x.id === id);
       if (f) URL.revokeObjectURL(f.url);
@@ -979,6 +977,17 @@ function Demo() {
     });
   };
 
+  const allFiles = [...files.image, ...files.video, ...files.audio, ...files.doc];
+  return { files, addFiles, removeFile, allFiles };
+}
+
+function Demo({
+  files, addFiles, removeFile,
+}: {
+  files: FilesBySlot;
+  addFiles: (slot: keyof FilesBySlot, fl: FileList | null) => void;
+  removeFile: (slot: keyof FilesBySlot, id: string) => void;
+}) {
   const slots = [
     { key: "image" as const, label: "Satellite Image Input", accept: "image/*", color: "neon-blue", icon: ImageIcon },
     { key: "video" as const, label: "Orbital Video Feed", accept: "video/*", color: "neon-purple", icon: Video },
@@ -991,7 +1000,7 @@ function Demo() {
       <SectionTitle
         kicker="Multimodal upload center"
         title="Feed the cognition core"
-        sub="Drop satellite imagery, orbital video, signal audio, or mission text. The engine scans, analyzes, and returns insights in real time."
+        sub="Drop satellite imagery, orbital video, signal audio, or mission text. The engine scans, analyzes, and returns a live AI report below."
       />
       <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-2">
         {slots.map((s) => (
