@@ -757,6 +757,34 @@ function Assistant() {
   );
 }
 
+function TeamParticles() {
+  const dots = Array.from({ length: 36 });
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {dots.map((_, i) => {
+        const colors = ["neon-blue", "neon-purple", "neon-cyan", "neon-pink"];
+        const c = colors[i % colors.length];
+        const left = (i * 37) % 100;
+        const delay = (i % 8) * 0.6;
+        const dur = 6 + (i % 5);
+        return (
+          <span
+            key={i}
+            className={`absolute h-1.5 w-1.5 rounded-full bg-${c}`}
+            style={{
+              left: `${left}%`,
+              bottom: `-10px`,
+              boxShadow: `0 0 10px currentColor`,
+              animation: `float-y ${dur}s ease-in-out ${delay}s infinite, pulse-glow ${dur}s ease-in-out infinite`,
+              opacity: 0.6,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 // ---------- Team ----------
 type Member = { id: string; name: string; color: string; img?: string };
 
