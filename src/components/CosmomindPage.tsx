@@ -758,9 +758,9 @@ function Assistant() {
 }
 
 // ---------- Team ----------
-type Member = { id: string; name: string; role: string; color: string; img?: string };
+type Member = { id: string; name: string; color: string; img?: string };
 
-function TeamCard({ member, onChange }: { member: Member; onChange: (m: Member) => void }) {
+function TeamCard({ member, onChange, index }: { member: Member; onChange: (m: Member) => void; index: number }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const initials = member.name.split(" ").map((s) => s[0]).filter(Boolean).slice(0, 2).join("");
   const onPick = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -769,76 +769,74 @@ function TeamCard({ member, onChange }: { member: Member; onChange: (m: Member) 
     if (fileRef.current) fileRef.current.value = "";
   };
   return (
-    <GlowCard className="text-center">
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
-      <button
-        type="button"
-        onClick={() => fileRef.current?.click()}
-        className={`group relative mx-auto mb-4 grid h-24 w-24 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-${member.color}/40 to-background border-2 border-${member.color}/50 animate-float-y transition hover:scale-105`}
-        style={{ boxShadow: `0 0 30px oklch(0.72 0.22 250 / 0.25)` }}
-        title="Click to change photo"
-      >
-        {member.img ? (
-          <img src={member.img} alt={member.name} className="h-full w-full object-cover" />
-        ) : (
-          <span className={`font-display text-3xl font-bold text-${member.color}`}>{initials}</span>
-        )}
-        <span className="absolute inset-0 grid place-items-center bg-background/70 opacity-0 transition group-hover:opacity-100">
-          <Camera className={`h-5 w-5 text-${member.color}`} />
-        </span>
-      </button>
-      <div
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={(e) => onChange({ ...member, name: e.currentTarget.textContent || member.name })}
-        className="font-display text-lg font-bold outline-none focus:text-neon-cyan"
-      >
-        {member.name}
-      </div>
-      <div
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={(e) => onChange({ ...member, role: e.currentTarget.textContent || member.role })}
-        className={`mt-1 text-xs uppercase tracking-[0.25em] outline-none text-${member.color}`}
-      >
-        {member.role}
-      </div>
-    </GlowCard>
-  );
-}
+    <div className={`group relative overflow-hidden rounded-3xl glass-panel-glow p-8 transition-all duration-500 hover:-translate-y-2 hover:border-${member.color}/70`}
+         style={{ boxShadow: `0 0 40px oklch(0.72 0.22 250 / 0.15)` }}>
+      {/* animated neon border lines */}
+      <span className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-${member.color} to-transparent animate-pulse`} />
+      <span className={`pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-${member.color} to-transparent animate-pulse`} />
+      <span className={`pointer-events-none absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-${member.color} to-transparent`} />
+      <span className={`pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-${member.color} to-transparent`} />
+      {/* corner brackets */}
+      {["top-2 left-2 border-t-2 border-l-2", "top-2 right-2 border-t-2 border-r-2", "bottom-2 left-2 border-b-2 border-l-2", "bottom-2 right-2 border-b-2 border-r-2"].map((p) => (
+        <span key={p} className={`pointer-events-none absolute h-4 w-4 ${p} border-${member.color}/70 transition-opacity opacity-60 group-hover:opacity-100`} />
+      ))}
+      {/* hologram sweep */}
+      <span className={`pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-${member.color}/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full`} />
 
-function TeamParticles() {
-  const dots = Array.from({ length: 28 });
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {dots.map((_, i) => {
-        const colors = ["neon-blue", "neon-purple", "neon-cyan", "neon-pink"];
-        const c = colors[i % colors.length];
-        const left = (i * 37) % 100;
-        const delay = (i % 8) * 0.6;
-        const dur = 6 + (i % 5);
-        return (
-          <span
-            key={i}
-            className={`absolute h-1.5 w-1.5 rounded-full bg-${c}`}
-            style={{
-              left: `${left}%`,
-              bottom: `-10px`,
-              boxShadow: `0 0 10px currentColor`,
-              animation: `float-y ${dur}s ease-in-out ${delay}s infinite, pulse-glow ${dur}s ease-in-out infinite`,
-              opacity: 0.6,
-            }}
-          />
-        );
-      })}
+      <div className="relative text-center">
+        <div className={`mb-2 inline-flex items-center gap-2 rounded-full border border-${member.color}/40 bg-${member.color}/10 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-${member.color}`}>
+          <Sparkles className="h-3 w-3" /> Crew · 0{index + 1}
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          className={`group/avatar relative mx-auto mt-3 mb-5 grid h-28 w-28 place-items-center overflow-hidden rounded-full border-2 border-${member.color}/60 animate-float-y transition hover:scale-105`}
+          style={{ boxShadow: `0 0 35px oklch(0.72 0.22 250 / 0.4)` }}
+          title="Click to change photo"
+        >
+          <span className={`absolute inset-0 rounded-full bg-gradient-to-br from-${member.color}/40 via-background to-${member.color}/20`} />
+          <span className={`absolute inset-0 rounded-full border border-${member.color}/30 animate-orbit`} />
+          {member.img ? (
+            <img src={member.img} alt={member.name} className="relative h-full w-full object-cover" />
+          ) : (
+            <span className={`relative font-display text-3xl font-bold text-${member.color} text-glow-cyan`}>{initials}</span>
+          )}
+          <span className="absolute inset-0 grid place-items-center bg-background/70 opacity-0 transition group-hover/avatar:opacity-100">
+            <Camera className={`h-5 w-5 text-${member.color}`} />
+          </span>
+        </button>
+
+        <div
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={(e) => onChange({ ...member, name: e.currentTarget.textContent || member.name })}
+          className="font-display text-xl font-bold outline-none focus:text-neon-cyan"
+        >
+          {member.name}
+        </div>
+        <div className={`mt-2 text-[10px] uppercase tracking-[0.3em] text-${member.color}`}>
+          ISE · COSMOMIND AI
+        </div>
+
+        <div className={`mx-auto mt-5 h-px w-2/3 bg-gradient-to-r from-transparent via-${member.color}/60 to-transparent`} />
+
+        <div className="mt-4 flex items-center justify-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className={`h-1.5 w-1.5 rounded-full bg-${member.color} animate-pulse`} /> Online
+          </span>
+          <span>·</span>
+          <span>Clearance A1</span>
+        </div>
+      </div>
     </div>
   );
 }
 
 function Team() {
   const [team, setTeam] = useState<Member[]>([
-    { id: "1", name: "Sumaiya Khanam", role: "Multimodal AI Engineer", color: "neon-blue" },
-    { id: "2", name: "Keerthana CS", role: "Space Data Analyst", color: "neon-purple" },
+    { id: "1", name: "Keerthana CS", color: "neon-cyan" },
+    { id: "2", name: "Sumaiya Khanam", color: "neon-purple" },
   ]);
   const update = (m: Member) => setTeam((t) => t.map((x) => (x.id === m.id ? m : x)));
   return (
@@ -847,12 +845,17 @@ function Team() {
       <SectionTitle
         kicker="The crew"
         title="Meet the COSMOMIND AI Team"
-        sub="Engineering the Future of Intelligent Space Analytics"
+        sub="Department of Information Science and Engineering (ISE) — engineering the future of intelligent space analytics."
       />
-      <div className="relative mx-auto grid max-w-3xl gap-8 sm:grid-cols-2">
+      <div className="relative mx-auto mb-10 max-w-2xl text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-neon-purple/40 bg-neon-purple/10 px-4 py-1.5 text-xs uppercase tracking-[0.3em] text-neon-purple">
+          <Cpu className="h-3 w-3" /> Department of Information Science and Engineering (ISE)
+        </div>
+      </div>
+      <div className="relative mx-auto grid max-w-4xl gap-8 sm:grid-cols-2">
         {team.map((m, i) => (
           <motion.div key={m.id} {...fadeUp} transition={{ ...fadeUp.transition, delay: i * 0.1 }}>
-            <TeamCard member={m} onChange={update} />
+            <TeamCard member={m} onChange={update} index={i} />
           </motion.div>
         ))}
       </div>
