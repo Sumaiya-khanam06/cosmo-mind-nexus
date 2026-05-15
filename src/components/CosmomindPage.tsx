@@ -403,7 +403,234 @@ function Dashboard() {
   );
 }
 
-// ---------- Upload Center ----------
+// ---------- AI Results Dashboard ----------
+function useCounter(target: number, duration = 1600) {
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / duration);
+      setV(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return v;
+}
+
+function ResultShell({ color, children, accent }: { color: string; children: React.ReactNode; accent?: string }) {
+  return (
+    <div
+      className={`group relative overflow-hidden rounded-3xl glass-panel-glow p-7 transition-all duration-500 hover:-translate-y-1.5 hover:border-${color}/70`}
+      style={{ boxShadow: `0 0 50px oklch(0.72 0.22 250 / 0.18)` }}
+    >
+      <span className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-${color} to-transparent animate-pulse`} />
+      <span className={`pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-${accent ?? color} to-transparent animate-pulse`} />
+      {["top-2 left-2 border-t-2 border-l-2", "top-2 right-2 border-t-2 border-r-2", "bottom-2 left-2 border-b-2 border-l-2", "bottom-2 right-2 border-b-2 border-r-2"].map((p) => (
+        <span key={p} className={`pointer-events-none absolute h-4 w-4 ${p} border-${color}/70`} />
+      ))}
+      <span className={`pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-${color}/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full`} />
+      <div className="relative">{children}</div>
+    </div>
+  );
+}
+
+function ConfidenceRing() {
+  const v = useCounter(98.7);
+  const r = 70, c = 2 * Math.PI * r;
+  const off = c - (v / 100) * c;
+  return (
+    <ResultShell color="neon-cyan">
+      <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-neon-cyan">
+        <span className="flex items-center gap-2"><Brain className="h-4 w-4" /> AI Confidence</span>
+        <span className="rounded-full border border-neon-cyan/40 bg-neon-cyan/10 px-2 py-0.5">LIVE</span>
+      </div>
+      <div className="mt-6 flex items-center gap-6">
+        <div className="relative h-44 w-44 shrink-0">
+          <svg viewBox="0 0 180 180" className="h-full w-full -rotate-90">
+            <defs>
+              <linearGradient id="confGrad" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stopColor="oklch(0.85 0.18 200)" />
+                <stop offset="100%" stopColor="oklch(0.65 0.28 300)" />
+              </linearGradient>
+            </defs>
+            <circle cx="90" cy="90" r={r} stroke="oklch(0.20 0.05 280)" strokeWidth="10" fill="none" />
+            <circle cx="90" cy="90" r={r} stroke="url(#confGrad)" strokeWidth="10" strokeLinecap="round" fill="none"
+              strokeDasharray={c} strokeDashoffset={off}
+              style={{ filter: "drop-shadow(0 0 10px oklch(0.85 0.18 200 / 0.7))" }} />
+          </svg>
+          <span className="absolute inset-0 rounded-full border border-neon-cyan/20 animate-orbit" />
+          <div className="absolute inset-0 grid place-items-center">
+            <div className="text-center">
+              <div className="font-display text-4xl font-black text-neon-cyan text-glow-cyan tabular-nums">{v.toFixed(1)}%</div>
+              <div className="mt-1 text-[10px] uppercase tracking-[0.3em] text-muted-foreground">Confidence</div>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 space-y-2 text-sm text-muted-foreground">
+          <div className="font-display text-lg font-bold text-foreground">Multimodal certainty</div>
+          <p>Cross-modal attention agreement across image, video, audio, and text streams. Radar-locked on primary target.</p>
+          <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+            {[["IMG","99%"],["AUD","98%"],["TXT","97%"]].map(([l,v]) => (
+              <div key={l} className="rounded-lg border border-neon-cyan/20 bg-neon-cyan/5 px-2 py-1.5">
+                <div className="font-display text-sm font-bold text-neon-cyan">{v}</div>
+                <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </ResultShell>
+  );
+}
+
+function AnomalyCard() {
+  const v = useCounter(94.3);
+  return (
+    <ResultShell color="neon-pink">
+      <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-neon-pink">
+        <span className="flex items-center gap-2"><ShieldAlert className="h-4 w-4 animate-pulse" /> Anomaly Detection</span>
+        <span className="flex items-center gap-1.5 rounded-full border border-neon-pink/40 bg-neon-pink/10 px-2 py-0.5">
+          <span className="h-1.5 w-1.5 animate-ping rounded-full bg-neon-pink" /> ALERT
+        </span>
+      </div>
+      <div className="mt-5 flex items-baseline gap-3">
+        <div className="font-display text-6xl font-black text-neon-pink text-glow-blue tabular-nums">{v.toFixed(1)}</div>
+        <div className="font-display text-2xl text-neon-pink">%</div>
+      </div>
+      <p className="mt-3 text-sm text-muted-foreground">
+        Potential orbital climate anomaly detected near monitored satellite region.
+      </p>
+      <div className="mt-5 grid grid-cols-12 gap-1">
+        {Array.from({ length: 24 }).map((_, i) => (
+          <span key={i} className="h-8 rounded-sm bg-neon-pink/30"
+            style={{ opacity: 0.25 + ((i * 7) % 9) / 12, animation: `pulse-glow ${1.5 + (i % 4) * 0.3}s ease-in-out infinite` }} />
+        ))}
+      </div>
+      <div className="mt-4 flex items-center justify-between text-[10px] uppercase tracking-widest">
+        <span className="text-muted-foreground">Sector 7-G · LAT 28.5N</span>
+        <span className="text-neon-pink">Severity: ELEVATED</span>
+      </div>
+    </ResultShell>
+  );
+}
+
+function ReconstructionCard() {
+  const v = useCounter(97.8);
+  return (
+    <ResultShell color="neon-blue" accent="neon-purple">
+      <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-neon-blue">
+        <span className="flex items-center gap-2"><Eye className="h-4 w-4" /> Reconstruction Accuracy</span>
+        <span className="rounded-full border border-neon-blue/40 bg-neon-blue/10 px-2 py-0.5">SCAN</span>
+      </div>
+      <div className="mt-5 flex items-baseline gap-3">
+        <div className="font-display text-6xl font-black text-gradient-cosmic tabular-nums">{v.toFixed(1)}</div>
+        <div className="font-display text-2xl text-neon-purple">%</div>
+      </div>
+      <p className="mt-3 text-sm text-muted-foreground">
+        Satellite terrain successfully reconstructed using multimodal fusion intelligence.
+      </p>
+      <div className="relative mt-5 h-28 overflow-hidden rounded-xl border border-neon-blue/30 bg-gradient-to-br from-neon-blue/15 via-background to-neon-purple/20">
+        <div className="absolute inset-0 grid-bg opacity-40" />
+        <span className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-neon-cyan/40 to-transparent"
+          style={{ animation: "scan 2.4s linear infinite" }} />
+        <div className="absolute inset-0 grid grid-cols-8 grid-rows-4 gap-px p-2">
+          {Array.from({ length: 32 }).map((_, i) => (
+            <span key={i} className="rounded-sm bg-neon-blue/20" style={{ opacity: 0.2 + ((i * 11) % 9) / 14 }} />
+          ))}
+        </div>
+      </div>
+    </ResultShell>
+  );
+}
+
+function SignalCard() {
+  const v = useCounter(96.5);
+  const bars = Array.from({ length: 40 });
+  return (
+    <ResultShell color="neon-purple" accent="neon-cyan">
+      <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-neon-purple">
+        <span className="flex items-center gap-2"><Waves className="h-4 w-4" /> Signal Analysis Success</span>
+        <span className="rounded-full border border-neon-purple/40 bg-neon-purple/10 px-2 py-0.5">DECODED</span>
+      </div>
+      <div className="mt-5 flex items-baseline gap-3">
+        <div className="font-display text-6xl font-black text-neon-purple text-glow-blue tabular-nums">{v.toFixed(1)}</div>
+        <div className="font-display text-2xl text-neon-purple">%</div>
+      </div>
+      <p className="mt-3 text-sm text-muted-foreground">
+        Communication signal pattern successfully decoded and analyzed.
+      </p>
+      <div className="mt-5 flex h-24 items-center gap-1 rounded-xl border border-neon-purple/30 bg-background/40 px-3">
+        {bars.map((_, i) => {
+          const h = 20 + Math.abs(Math.sin(i * 0.7)) * 70;
+          return (
+            <span key={i} className="flex-1 rounded-full bg-gradient-to-t from-neon-purple to-neon-cyan"
+              style={{ height: `${h}%`, animation: `pulse-glow ${1 + (i % 5) * 0.2}s ease-in-out infinite`, opacity: 0.55 + (i % 7) / 18 }} />
+          );
+        })}
+      </div>
+    </ResultShell>
+  );
+}
+
+function PredictionCard() {
+  const v = useCounter(99.1);
+  const points = "0,55 12,48 24,52 36,40 48,42 60,30 72,34 84,22 96,26 108,14 120,18";
+  return (
+    <ResultShell color="neon-cyan" accent="neon-pink">
+      <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-neon-cyan">
+        <span className="flex items-center gap-2"><Activity className="h-4 w-4" /> Prediction Accuracy</span>
+        <span className="rounded-full border border-neon-cyan/40 bg-neon-cyan/10 px-2 py-0.5">FORECAST</span>
+      </div>
+      <div className="mt-5 flex items-baseline gap-3">
+        <div className="font-display text-6xl font-black text-gradient-aurora tabular-nums">{v.toFixed(1)}</div>
+        <div className="font-display text-2xl text-neon-cyan">%</div>
+      </div>
+      <p className="mt-3 text-sm text-muted-foreground">
+        AI successfully generated climate and orbital predictive insights.
+      </p>
+      <div className="mt-5 h-28 overflow-hidden rounded-xl border border-neon-cyan/30 bg-gradient-to-br from-background to-neon-cyan/10 p-3">
+        <svg viewBox="0 0 120 60" className="h-full w-full" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="predFill" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="oklch(0.85 0.18 200 / 0.6)" />
+              <stop offset="100%" stopColor="oklch(0.85 0.18 200 / 0)" />
+            </linearGradient>
+          </defs>
+          <polyline points={`0,60 ${points} 120,60`} fill="url(#predFill)" />
+          <polyline points={points} fill="none" stroke="oklch(0.85 0.18 200)" strokeWidth="1.5"
+            style={{ filter: "drop-shadow(0 0 6px oklch(0.85 0.18 200 / 0.9))" }} />
+          {points.split(" ").map((p, i) => {
+            const [x, y] = p.split(",");
+            return <circle key={i} cx={x} cy={y} r="1.5" fill="oklch(0.72 0.30 350)" />;
+          })}
+        </svg>
+      </div>
+    </ResultShell>
+  );
+}
+
+function ResultsDashboard() {
+  return (
+    <section id="results" className="relative overflow-hidden px-6 py-32">
+      <TeamParticles />
+      <SectionTitle
+        kicker="AI Result Dashboard"
+        title="Multimodal Intelligence Output"
+        sub="Live cognition scores from the COSMOMIND core — confidence, anomaly, reconstruction, signal, and prediction in one cinematic command surface."
+      />
+      <div className="relative mx-auto grid max-w-7xl gap-7 lg:grid-cols-6">
+        <motion.div {...fadeUp} className="lg:col-span-3"><ConfidenceRing /></motion.div>
+        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.1 }} className="lg:col-span-3"><AnomalyCard /></motion.div>
+        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.15 }} className="lg:col-span-2"><ReconstructionCard /></motion.div>
+        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.2 }} className="lg:col-span-2"><SignalCard /></motion.div>
+        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.25 }} className="lg:col-span-2"><PredictionCard /></motion.div>
+      </div>
+    </section>
+  );
+}
 type UploadedFile = {
   id: string;
   name: string;
