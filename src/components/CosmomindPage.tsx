@@ -1330,6 +1330,7 @@ function Footer() {
 
 // ---------- Page ----------
 export default function CosmomindPage() {
+  const upload = useUploadEngine();
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <StarField />
@@ -1341,8 +1342,8 @@ export default function CosmomindPage() {
         <Capabilities />
         <Engine />
         <Dashboard />
-        <Demo />
-        <ResultsDashboard />
+        <Demo files={upload.files} addFiles={upload.addFiles} removeFile={upload.removeFile} />
+        <DynamicResults files={upload.allFiles} />
         <Applications />
         <TechFuture />
         <Team />
